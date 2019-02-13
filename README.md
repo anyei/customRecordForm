@@ -2,7 +2,7 @@
 sfdc lightning component, customRecordForm to edit standard/custom object records.
 ### demo
 
-![demo](https://github.com/anyei/customAutoComplete/raw/master/customRecordForm-Demo.gif)
+![demo](https://github.com/anyei/customRecordForm/raw/master/customRecordForm-Demo.gif)
 
 
 ### Install
