@@ -1,0 +1,261 @@
+<aura:component >
+    <aura:attribute name="sObjectType" type="String" required="true" />
+    <aura:attribute name="fields" type="List" required="true" />
+    <aura:attribute name="autoReload" type="boolean" default="true" />
+    <aura:attribute name="maxWidth" type="String" default="500px" />
+    <aura:attribute access="private" name="fieldsDescribed" type="List"  default="[]"/>
+    <aura:attribute access="private" name="fieldsDescribedMap" type="Map" />
+    <aura:attribute access="private" name="readOnlyData" type="List" default="[]" />
+    <aura:attribute access="private" name="mode" type="String" default='view' />
+    <aura:attribute access="private" name="data" type="Map" />
+    <aura:attribute access="private" name="uniqueId" type="String" />
+    <aura:attribute access="private" name="error" type="String" />
+    <aura:attribute access="private" name="showLoader" type="boolean" />
+    
+    
+    <aura:handler event="c:customRecordFormApplicationEvent" action="{!c.applicationEventHandler}" />
+    <aura:handler value="{!this}" name="init" action="{!c.doInit}" />
+    
+      
+   
+    <div class="slds-form" role="list" style="{!'max-width:'+v.maxWidth}" >
+       
+        <aura:if isTrue="{!and(v.error != '', v.error != null)}">
+            <div class="slds-form__row">
+                <div class="slds-form__item" >
+                    <div class="slds-notify_container slds-is-relative"><div role="alert" class="slds-notify slds-notify_toast slds-theme_error"><div class="slds-notify__content">
+                        <h2 class="slds-text-heading_small">An error occurred while trying to update the record. Please try again.</h2>
+                        <p>{!v.error}</p></div></div></div>
+                </div>
+            </div>
+        </aura:if>
+        
+                        <div class="slds-form__row">
+
+            
+            <aura:if isTrue="{!v.mode=='view'}">
+                <aura:iteration items="{!v.fieldsDescribed}" var="aField" >
+                    <div class="slds-form__item" role="listitem">
+                        <aura:if isTrue="{!and(aField.data_type == 'string' || aField.data_type == 'picklist' || aField.data_type == 'multipicklist'  || aField.data_type == 'datetime' || aField.data_type == 'date' || aField.data_type == 'currency' || aField.data_type =='textarea' || aField.data_type=='boolean' || aField.data_type=='phone' || aField.data_type=='double' || aField.data_type == 'long' || aField.data_type=='integer' || aField.data_type=='percent', aField.isAccessible == true)}">
+                            <div class="slds-form-element slds-form-element_edit slds-form-element_readonly  slds-form-element_stacked slds-hint-parent slds-form-element_1-col">
+                                <span class="slds-form-element__label">{!aField.label}</span>
+                                <aura:if isTrue="{!aField.showHelp}">
+                                    <lightning:helptext content="{!aField.inlineHelpText}" />
+                                    
+                                    
+                                </aura:if>
+                                
+                                <div class="slds-form-element__control">
+                                    <div class="slds-form-element__static">
+                                        <aura:if isTrue="{!aField.data_type=='boolean'}">
+                                            <lightning:input type="checkbox" checked="{!aField.value}" label="{!aField.label}" disabled="true"   />    
+                                        </aura:if>
+                                        <aura:if isTrue="{!aField.data_type == 'phone'}">
+                                            <a href="{!'tel:'+aField.value}"><ui:outputPhone value="{!aField.value}" /></a>
+                                        </aura:if>
+                                        <aura:if isTrue="{!aField.data_type == 'email'}">
+                                            <ui:outputEmail value="{!aField.value}"/>                                       
+                                        </aura:if>                                        
+                                        <aura:if isTrue="{!aField.data_type == 'integer' }">
+                                            <ui:outputNumber value="{!aField.value}"/>                                       
+                                        </aura:if>
+                                        <aura:if isTrue="{!aField.data_type == 'long' }">
+                                            <ui:outputNumber value="{!aField.value}"/>                                       
+                                        </aura:if>
+                                        <aura:if isTrue="{!aField.data_type == 'double'}">
+                                            <ui:outputNumber value="{!aField.value}"/>                                       
+                                        </aura:if>
+                                        <aura:if isTrue="{!aField.data_type == 'textarea'}">
+                                            <ui:outputTextArea value="{!aField.value}"/>                                       
+                                        </aura:if>
+                                        <aura:if isTrue="{!aField.data_type == 'currency'}">
+                                            <ui:outputCurrency value="{!aField.value}"/>                                       
+                                        </aura:if>
+                                        <aura:if isTrue="{!aField.data_type=='date'}">
+                                            <ui:outputDate  value="{!aField.value}" format="MM/dd/yy"  />
+                                        </aura:if>
+                                        <aura:if isTrue="{!aField.data_type=='datetime'}">
+                                            <ui:outputDateTime  value="{!aField.value}" format="MM/dd/yy hh:mm a"  />
+                                        </aura:if>
+                                         <aura:if isTrue="{!aField.data_type == 'string'}">
+                                            <ui:outputText  value="{!aField.value}"   />
+                                        </aura:if>
+                                         <aura:if isTrue="{!aField.data_type == 'picklist'}">
+                                            <ui:outputText  value="{!aField.value}"   />
+                                        </aura:if>
+                                        <aura:if isTrue="{!aField.data_type == 'multipicklist'}">
+                                            <ui:outputText  value="{!aField.value}"   />
+                                        </aura:if>
+                                    </div>
+                                    <button class="slds-button slds-button_icon-bare" title="{!'Edit: '+aField.label}" onclick="{!c.switchToEdit}">
+                                        <lightning:icon iconName="utility:edit" size="xx-small" alternativeText="{!'Edit: '+aField.label}"/>
+                                        
+                                        <!-- <svg class="slds-button__icon slds-button__icon_hint" aria-hidden="true">
+                            <use xlink:href="/assets/icons/utility-sprite/svg/symbols.svg#edit"></use>
+                        </svg>
+                        <span class="slds-assistive-text">Edit: SLA Serial Number</span> -->
+                                    </button>
+                                </div>
+                            </div>
+                            
+                        </aura:if>
+                        <aura:if isTrue="{!aField.isLookup}">
+                            <c:customAutoComplete valueField="Id" aura:id="{!aField.apiName+'view'}" loadById="{!aField.value}"   labelField="Name" mode="view" targetObject="{!aField.targetObject.apiName}" label="{!aField.label}" onItemEdit="{!c.switchToEdit}" placeholder="{!'Search '+aField.targetObject.label}" />
+                        </aura:if>
+                        
+                    </div>
+                    
+                </aura:iteration>
+            </aura:if>
+            
+            <aura:if isTrue="{!v.mode=='edit'}">
+                <aura:iteration items="{!v.fieldsDescribed}" var="aField" >
+                    <div class="slds-form__item" role="listitem">
+                        <aura:if isTrue="{!and(aField.data_type == 'string' || aField.data_type == 'picklist' || aField.data_type == 'multipicklist'  || aField.data_type == 'datetime' || aField.data_type == 'date' || aField.data_type == 'currency' || aField.data_type =='textarea' || aField.data_type=='boolean' || aField.data_type=='phone' || aField.data_type=='double' || aField.data_type == 'long' || aField.data_type=='integer' || aField.data_type=='percent', aField.isAccessible == true)}">
+                            
+                            <div class="slds-form__item" role="listitem">
+                                <div class="slds-form-element slds-form-element_stacked slds-is-editing  slds-form-element_stacked slds-hint-parent slds-form-element_1-col">
+                                    
+                                    <div class="slds-form-element__control" style="position:relative">
+                                        <aura:if isTrue="{!aField.disabled != true}">                                            
+                                            <aura:if isTrue="{!aField.data_type=='long'}">
+                                                <lightning:input type="number" label="{!aField.label}" value="{!aField.value}" />    
+                                            </aura:if>
+                                            <aura:if isTrue="{!aField.data_type=='double'}">
+                                                <lightning:input type="number" label="{!aField.label}" value="{!aField.value}" />    
+                                            </aura:if>
+                                            <aura:if isTrue="{!aField.data_type=='integer'}">
+                                                <lightning:input type="number" label="{!aField.label}" value="{!aField.value}" />    
+                                            </aura:if>
+                                            <aura:if isTrue="{!aField.data_type=='email'}">
+                                                <lightning:input type="email" label="{!aField.label}" value="{!aField.value}" />    
+                                            </aura:if>
+                                            <aura:if isTrue="{!aField.data_type=='phone'}">
+                                                <lightning:input type="tel" label="{!aField.label}" value="{!aField.value}" />    
+                                            </aura:if>
+                                            <aura:if isTrue="{!aField.data_type=='boolean'}">
+                                                <lightning:input type="checkbox" label="{!aField.label}" checked="{!aField.value}" />    
+                                            </aura:if>
+                                            <aura:if isTrue="{!aField.data_type=='textarea'}">
+                                                <lightning:textarea label="{!aField.label}" value="{!aField.value}" />    
+                                            </aura:if>
+                                            <aura:if isTrue="{!aField.data_type == 'currency'}">
+                                                <lightning:input type="number" label="{!aField.label}" value="{!aField.value}" />                                       
+                                            </aura:if>
+                                            <aura:if isTrue="{!aField.data_type=='date'}">
+                                                <lightning:input type="date" label="{!aField.label}"  value="{!aField.value}" format="MM/dd/yy"  />
+                                            </aura:if>
+                                            <aura:if isTrue="{!aField.data_type=='datetime'}">
+                                                <lightning:input type="datetime" label="{!aField.label}"  value="{!aField.value}" format="MM/dd/yy hh:mm a"   />
+                                            </aura:if>
+                                            <aura:if isTrue="{!aField.data_type=='string'}">
+                                                <lightning:input type="text" label="{!aField.label}"  value="{!aField.value}"  />
+                                            </aura:if>
+                                            <aura:if isTrue="{!aField.data_type == 'multipicklist'}">
+                                                <lightning:dualListbox aura:id="{!aField.apiName+'edit'}" name="{!aField.apiName+'edit'}"  
+                                                                       label= "{!aField.label}" 
+                                                                       sourceLabel="Available" 
+                                                                       selectedLabel="Selected" 
+                                                                       fieldLevelHelp="{!aField.inlineHelpText}" 
+                                                                       options="{!aField.values}" 
+                                                                       value="{!aField.selectedValues}"
+                                                                       /> 
+                                            </aura:if>
+                                            <aura:if isTrue="{!aField.data_type == 'picklist'}">
+                                                <lightning:select name="{!aField.apiName+'edit'}"  label="{!aField.label}" aura:id="{!aField.apiName+'edit'}" class="{!aField.apiName}" onchange="{!c.picklistChange}" >
+                                                    <option value="">--None--</option>
+                                                    <aura:iteration items="{!aField.values}" var="option">
+                                                        <option text="{!option.label}" value="{!option.value}" selected="{!option.selected}" />
+                                                    </aura:iteration>
+                                                </lightning:select> 
+                                            </aura:if>
+                                            
+                                            
+                                            
+                                        </aura:if>
+                                        
+                                        
+                                        
+                                        <aura:if isTrue="{!aField.disabled == true}">
+                                            
+                                            <aura:if isTrue="{!aField.data_type=='long'}">
+                                                <lightning:input type="long" label="{!aField.label}" disabled="true" value="{!aField.value}" />    
+                                            </aura:if>
+                                            <aura:if isTrue="{!aField.data_type=='double'}">
+                                                <lightning:input type="double" label="{!aField.label}"  disabled="true" value="{!aField.value}" />    
+                                            </aura:if>
+                                            <aura:if isTrue="{!aField.data_type=='integer'}">
+                                                <lightning:input type="number" label="{!aField.label}"  disabled="true" value="{!aField.value}" />    
+                                            </aura:if>
+                                            <aura:if isTrue="{!aField.data_type=='email'}">
+                                                <lightning:input type="email" label="{!aField.label}"  disabled="true" value="{!aField.value}" />    
+                                            </aura:if>
+                                            <aura:if isTrue="{!aField.data_type=='phone'}">
+                                                <lightning:input type="tel" label="{!aField.label}"  disabled="true" value="{!aField.value}" />    
+                                            </aura:if>
+                                            <aura:if isTrue="{!aField.data_type=='boolean'}">
+                                                <lightning:input type="checkbox" label="{!aField.label}"  disabled="true" checked="{!aField.value}" />    
+                                            </aura:if>
+                                            <aura:if isTrue="{!aField.data_type=='textarea'}">
+                                                <lightning:textarea label="{!aField.label}"  disabled="true" value="{!aField.value}" />    
+                                            </aura:if>
+                                            <aura:if isTrue="{!aField.data_type == 'currency'}">
+                                                <lightning:input type="number" label="{!aField.label}"  disabled="true" value="{!aField.value}" />                                       
+                                            </aura:if>
+                                            <aura:if isTrue="{!aField.data_type=='date'}">
+                                                <lightning:input type="date" label="{!aField.label}"  disabled="true"  value="{!aField.value}" format="MM/dd/yy"  />
+                                            </aura:if>
+                                            <aura:if isTrue="{!aField.data_type=='datetime'}">
+                                                <lightning:input type="datetime" label="{!aField.label}"  disabled="true"  value="{!aField.value}" format="MM/dd/yy hh:mm a"   />
+                                            </aura:if>
+                                            <aura:if isTrue="{!aField.data_type=='string'}">
+                                                <lightning:input type="text" label="{!aField.label}"  disabled="true"  value="{!aField.value}"  />
+                                            </aura:if>
+                                            <aura:if isTrue="{!aField.data_type == 'multipicklist'}">
+                                                <lightning:dualListbox aura:id="{!aField.apiName+'edit'}"  disabled="true" name="{!aField.apiName+'edit'}"  
+                                                                       label= "{!aField.label}" 
+                                                                       sourceLabel="Available" 
+                                                                       selectedLabel="Selected" 
+                                                                       fieldLevelHelp="{!aField.inlineHelpText}" 
+                                                                       options="{!aField.values}" 
+                                                                       value="{!aField.selectedValues}"
+                                                                       /> 
+                                            </aura:if>
+                                            
+                                            
+                                            <aura:if isTrue="{!aField.data_type == 'picklist'}">
+                                                <lightning:select name="{!aField.apiName+'edit'}" disabled="true"  label="{!aField.label}" aura:id="{!aField.apiName+'edit'}" class="{!aField.apiName}" >
+                                                    <option value="">--None--</option>
+                                                    <aura:iteration items="{!aField.values}" var="option">
+                                                        <option text="{!option.label}" value="{!option.value}" selected="{!option.selected}" />
+                                                    </aura:iteration>
+                                                </lightning:select>  
+                                            </aura:if>
+                                        </aura:if>
+                                        <aura:if isTrue="{!aField.showHelp}">
+                                            <lightning:helptext content="{!aField.inlineHelpText}" />
+                                        </aura:if>
+                                        
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            
+                            
+                        </aura:if>
+                        <aura:if isTrue="{!aField.isLookup}">
+                            <c:customAutoComplete valueField="Id" aura:id="{!aField.apiName+'view'}" alternateFieldLabel="{!if(aField.targetObject.apiName =='Contact', 'Account.Name','Name')}" name="{!aField.apiName}" loadById="{!aField.value}" disabled="{!or(aField.apiName=='OwnerId', aField.isCalculated == true, aField.isUpdateable != true,aField.isAutoNumber == true) }"   labelField="Name" mode="edit" targetObject="{!aField.targetObject.apiName}" label="{!aField.label}" onItemRemoved="{!c.lookupItemRemoved}" onItemSelected="{!c.lookupItemSelected}"  placeholder="{!'Search '+aField.targetObject.label}" />
+                        </aura:if>
+                        
+                    </div>
+                </aura:iteration>
+                
+                <div class="slds-align_absolute-center slds-p-around_medium" style="width:100%">
+                    <lightning:button variant="Neutral" label="Cancel" onclick="{!c.switchToView}" />
+                    <lightning:button variant="Brand" label="Save" onclick="{!c.saveThis}" />
+                </div>
+            </aura:if>
+            
+        </div>
+    </div>
+</aura:component>

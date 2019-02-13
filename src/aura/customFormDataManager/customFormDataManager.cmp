@@ -1,0 +1,22 @@
+<aura:component controller="customRecordFormController" >
+    <aura:attribute name="setup" type="Map"  />
+    <aura:attribute name="dataCache" type="Map" />
+    <aura:attribute name="describeData" type="Map" />
+    
+    <aura:attribute access="private" name="showLoader" type="boolean" />
+    
+    <aura:registerEvent name="appEvent" type="c:customRecordFormApplicationEvent" />
+    
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+    <aura:handler event="c:customRecordFormApplicationEvent" action="{!c.applicationEventHandler}" />
+    <aura:handler name="change" value="{!v.setup}" action="{!c.setupChange}"/>
+
+    
+    <div class="modal-glass slds-backdrop fadein slds-backdrop--open" style="{!v.showLoader ? 'position:absolute' : 'display:none'}"> 
+        <div role="status" class="slds-spinner slds-spinner_medium">
+            <span class="slds-assistive-text">Loading</span>
+            <div class="slds-spinner__dot-a"></div>
+            <div class="slds-spinner__dot-b"></div>
+        </div>
+    </div>
+</aura:component>
