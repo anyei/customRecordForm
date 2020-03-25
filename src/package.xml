@@ -12,7 +12,8 @@
         <members>customRecordForm</members>
          <members>customAutoComplete</members>
         <members>customAutoCompleteEvent</members>
-        <members>customAutoCompleteItem</members>       
+        <members>customAutoCompleteItem</members> 
+        <members>customRecordFormApplicationEvent</members>      
         <name>AuraDefinitionBundle</name>
     </types>
     <version>36.0</version>
