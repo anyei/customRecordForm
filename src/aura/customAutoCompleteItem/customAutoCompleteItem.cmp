@@ -1,0 +1,29 @@
+<aura:component >
+    <aura:attribute name="value" type="Map" />
+    <aura:attribute name="onselected" type="Aura.Action" />
+    <aura:attribute name="name" type="String" />
+	<aura:registerEvent name="itemSelectedEvent" type="c:customAutoCompleteEvent"/>
+    <aura:handler name="itemSelectedEvent" event="c:customAutoCompleteEvent" action="{!v.onselected}"/>
+
+    <li role="presentation" class="slds-listbox__item">
+                                         <div id="option1" class="slds-media slds-listbox__option slds-listbox__option_entity slds-listbox__option_has-meta" onclick="{!c.onselected}" value="{!v.value.value}" role="option">
+                                            <span class="slds-media__figure slds-listbox__option-icon">
+                                                <span class="slds-icon_container slds-icon-standard-account">
+                                                    <lightning:icon iconName="standard:account"                                                                               
+                                                                    class="slds-icon slds-icon_small"/>                                   
+                                                </span>
+                                            </span>
+                                            <span class="slds-media__body">
+                                                <span class="slds-listbox__option-text slds-listbox__option-text_entity">{!v.value.label}</span>                                               
+                                                <span class="slds-listbox__option-meta slds-listbox__option-meta_entity">
+                                                    <aura:if isTrue="{!v.value.alternate == null || v.value.alternate==''}">
+                                                        {!v.value.value}
+                                                        <aura:set attribute="else">
+                                                        {!v.value.alternate}
+                                                        </aura:set>
+                                                </aura:if>
+                                                </span>
+                                            </span>
+                                        </div>
+                                    </li>
+</aura:component>

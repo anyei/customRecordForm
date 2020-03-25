@@ -1,0 +1,153 @@
+<aura:component controller="CustomAutoCompleteController" >
+    <aura:attribute name="value" type="Map" />
+    <aura:attribute name="label" type="String" />
+    <aura:attribute name="placeholder" type="String" default="Search..." />
+    <aura:attribute name="noRecordsMessage" type="String" default="No records found."/>
+    <aura:attribute name="results" type="Object[]" access="private" />
+    <aura:attribute name="searchInProgress" type="boolean" access="private" />
+    <aura:attribute name="insideItemList" type="boolean" access="private" />
+    <aura:attribute name="hasErrors" type="boolean" access="private" />
+    <aura:attribute name="valueField" type="String" />
+    <aura:attribute name="labelField" type="String" />
+    <aura:attribute name="targetObject" type="String" />
+    <aura:attribute name="customCondition" type="String" />
+    <aura:attribute name="itemLimit" type="String" default="7" />
+    <aura:attribute name="onItemSelected" type="Aura.Action" default="{!c.onItemSelectedDummy}" />
+    <aura:attribute name="onItemRemoved" type="Aura.Action"  default="{!c.onItemSelectedDummy}"/>
+    <aura:attribute name="onItemEdit" type="Aura.Action" default="{!c.onItemSelectedDummy}" />
+    <aura:attribute name="required" type="boolean" />
+    <aura:attribute name="validity" type="Map" />
+    <aura:attribute name="requiredMessage" type="String" default="Complete this field." />
+    <aura:attribute name="icon" type="String" default="standard:account" />
+    <aura:attribute name="mode" type="String" default="edit" />
+    <aura:attribute name="loadById" type="String" />
+    <aura:attribute name="disabled" type="boolean" />
+    <aura:attribute name="name" type="String" />
+    <aura:attribute name="showEditButton" type="boolean" default="true"/>
+    <aura:attribute name="alternateFieldLabel" type="String" />
+    <aura:registerEvent name="itemRemovedEvent" type="c:customAutoCompleteEvent" />
+    
+    
+    <aura:handler name="itemSelectedEvent" event="c:customAutoCompleteEvent" action="{!v.onItemSelected}"/>
+    <aura:handler name="itemRemovedEvent" event="c:customAutoCompleteEvent" action="{!v.onItemRemoved}"/>
+    
+    <aura:method name="showHelpMessageIfInvalid" action="{!c.validateThisComponent}" />
+    
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+    <aura:if isTrue="{!v.mode =='edit'}">
+        <div class="{!if(v.hasErrors, 'slds-has-error', '') + ' slds-form-element  slds-form-element_stacked slds-hint-parent slds-form-element_1-col'}" >
+            <label class="slds-form-element__label" for="combobox-id-5">
+                <aura:if isTrue="{!v.required}"><abbr class="slds-required" title="required">* </abbr></aura:if>{!v.label}</label>
+            <div class="slds-form-element__control">
+                <div class="{!if(v.value != null, 'slds-has-selection' + '' ) + ' slds-combobox_container'}" aura:id="combobox-container">
+                    <div aura:id="trigger-container" class="slds-combobox slds-dropdown-trigger slds-dropdown-trigger_click" aria-expanded="false" aria-haspopup="listbox" role="combobox">
+                        <div class="slds-combobox__form-element slds-input-has-icon slds-input-has-icon_left-right" role="none">
+                            <aura:if isTrue="{!v.value != null}">
+                                <span class="slds-icon_container slds-icon-standard-account slds-combobox__input-entity-icon" title="Account">
+                                    <lightning:icon iconName="standard:account"                                                                               
+                                                    class="slds-icon slds-icon_small"/>
+                                    <span class="slds-assistive-text">Account</span>
+                                </span>
+                            </aura:if>
+                            <aura:if isTrue="{!and(v.value != null,v.disabled != true)}">
+                                <input class="{!if(v.value != null, 'slds-combobox__input-value', '') +' slds-input slds-combobox__input'}" aria-controls="listbox-id-5" autocomplete="off" role="textbox" type="text" placeholder="{!v.placeholder}" readonly="true" value="{!v.value.label}" />
+                                
+                            </aura:if>
+                            <aura:if isTrue="{!and(v.value == null,v.disabled != true)}">
+                                <input class="{!if(v.value != null, 'slds-combobox__input-value', '') +' slds-input slds-combobox__input'}" aria-controls="listbox-id-5" autocomplete="off" role="textbox" type="text" placeholder="{!v.placeholder}" onkeyup="{!c.doSearch}" onblur="{!c.closeList}" value="{!v.value.label}"  />
+                                
+                            </aura:if>
+                            <aura:if isTrue="{!v.disabled == true}">
+                                <input class="{!if(v.value != null, 'slds-combobox__input-value', '') +' slds-input slds-combobox__input'}" aria-controls="listbox-id-5" autocomplete="off" role="textbox" type="text" placeholder="{!v.placeholder}" disabled="true" readonly="true" value="{!v.value.label}" />
+                                
+                            </aura:if>
+                            <aura:if isTrue="{!and(v.value != null, v.disabled != true)}">
+                                <button class="slds-button slds-button_icon slds-input__icon slds-input__icon_right" aura:id="closeButton"  onclick="{! c.clearValue }" title="Remove selected option">
+                                    <span class="slds-button__icon">x</span>
+                                    <span class="slds-assistive-text">Remove selected option</span>
+                                </button>
+                            </aura:if>
+                            <aura:if isTrue="{!and(v.value == null, v.disabled != true)}">
+                                <span class="slds-icon_container slds-icon-utility-search slds-input__icon slds-input__icon_right">
+                                    <lightning:icon iconName="utility:search"
+                                                    class="slds-icon slds-icon_x-small slds-icon-text-default">
+                                    </lightning:icon>
+                                </span>
+                            </aura:if>
+                        </div>
+                        <div id="listbox-id-5" class="slds-dropdown slds-dropdown_length-with-icon-7 slds-dropdown_fluid" role="listbox" onmouseleave="{!c.leavedItemList}" onmouseenter="{!c.insideItemList}">
+                            <ul class="slds-listbox slds-listbox_vertical" role="presentation">
+                                <aura:if isTrue="{!v.results.length > 0}">
+                                    <aura:iteration items="{!v.results}" var="aRecord">
+                                        <c:customAutoCompleteItem onselected="{!c.itemSelected}" value="{!aRecord}" name="{!v.name}" />
+                                    </aura:iteration>
+                                    <aura:set attribute="else">
+                                        <aura:if isTrue="{v.searchInProgress}">
+                                            <li role="presentation" class="slds-listbox__item">
+                                                <div class="slds-media slds-listbox__option slds-listbox__option_entity slds-listbox__option_has-meta" role="option">
+                                                    <span class="slds-media__figure slds-listbox__option-icon">
+                                                        <span class="slds-icon_container slds-icon-standard-account">
+                                                            <lightning:icon iconName="{!v.icon}"                                                                               
+                                                                            class="slds-icon slds-icon_small"/>
+                                                        </span>
+                                                    </span>
+                                                    <span class="slds-media__body">
+                                                        <lightning:spinner alternativeText="Loading" size="small" />
+                                                    </span>
+                                                </div>
+                                            </li>
+                                            <aura:set attribute="else">
+                                                <li role="presentation" class="slds-listbox__item">
+                                                    <div  class="slds-media slds-listbox__option slds-listbox__option_entity slds-listbox__option_has-meta" role="option">
+                                                        <span class="slds-media__figure slds-listbox__option-icon">
+                                                            <span class="slds-icon_container slds-icon-utility-info">
+                                                                <lightning:icon iconName="utility:info"                                                                               
+                                                                                class="slds-icon slds-icon_small"/>
+                                                            </span>
+                                                        </span>
+                                                        <span class="slds-media__body">
+                                                            <div class="slds-notify slds-notify_alert slds-theme_alert-texture slds-theme_info" role="alert">
+                                                                <span class="slds-assistive-text">info</span>
+                                                                <span class="slds-icon_container slds-icon-utility-user slds-m-right_x-small" title="Description of icon when needed">
+                                                                    <lightning:icon iconName="utility:info"                                                                               
+                                                                                    class="slds-icon slds-icon_x-small"/>
+                                                                </span>
+                                                                <h2>{!v.noRecordsMessage}
+                                                                </h2>
+                                                            </div>
+                                                        </span>
+                                                    </div>
+                                                </li>
+                                            </aura:set>
+                                        </aura:if>
+                                    </aura:set>
+                                </aura:if>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <aura:if isTrue="{!v.hasErrors}">
+                <div class="slds-form-element__help" id="error-message-unique-id">{!v.requiredMessage}</div>
+            </aura:if>
+            
+            
+        </div> 
+    </aura:if>
+    <aura:if isTrue="{!v.mode=='view'}">
+        <div class="slds-form-element slds-form-element_edit slds-form-element_readonly slds-form-element_stacked slds-hint-parent slds-form-element_1-col">
+            <span class="slds-form-element__label">{!v.label}</span>
+            <div class="slds-form-element__control">
+                <div class="slds-form-element__static">
+                    <a href="{!'/lightning/r/'+v.value.value+'/view'}">{!v.value.label}</a>
+                </div>
+                <aura:if isTrue="{!v.showEditButton}">
+                    <button class="slds-button slds-button_icon" title="{!'Edit: '+v.label}" onclick="{!v.onItemEdit}" >
+                        <lightning:icon iconName="utility:edit" size="xx-small"  alternativeText="{!'Edit: '+v.value.label}"/>
+                    </button>
+                </aura:if>                
+            </div>
+        </div>
+    </aura:if>
+    
+</aura:component>
